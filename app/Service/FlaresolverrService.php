@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Models\Cookie;
+use Carbon\Carbon;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
@@ -16,6 +18,15 @@ class FlaresolverrService implements IProxyRequestService
      */
     public static function bypass(string $url, string $method, array $data = [], array $cookies = [], ?string $proxy = null): array
     {
+        $host = parse_url($url, PHP_URL_HOST);
+
+        $existCookies = Cookie::query()->where('host', $host)->where('expiry', '>', now())->get(['key', 'value', 'expiry']);
+
+        /** @var Cookie $cookie */
+        foreach ($existCookies as $cookie) {
+            $cookies[$cookie->key] = $cookie->value;
+        }
+
         $body = [
             "cmd" => "request.get",
             "url" => $url,
@@ -34,7 +45,12 @@ class FlaresolverrService implements IProxyRequestService
 
         $response = Http::timeout(60)->post(self::getUrl(), $body);
 
-        return self::convertResponse($response->json());
+
+        $response = self::convertResponse($response->json());
+
+        self::saveCookies($response['cookies']);
+
+        return $response;
     }
 
 
@@ -63,5 +79,33 @@ class FlaresolverrService implements IProxyRequestService
         $actual['response'] = data_get($json, 'solution.response', []);
 
         return $actual;
+    }
+
+    private static function saveCookies(array $cookies): void
+    {
+        if (empty($cookies)) {
+            return;
+        }
+
+        foreach ($cookies as $cookie) {
+            $values = [
+                'host' => ltrim($cookie['domain'], '.'),
+                'key' => $cookie['name'],
+                'value' => $cookie['value'],
+            ];
+
+            $updates = ['value'];
+
+            if (!empty($cookie['expiry'])) {
+                $values['expiry'] = Carbon::createFromTimestamp($cookie['expiry']);
+                $updates[] = 'expiry';
+            }
+
+            Cookie::query()->upsert(
+                $values,
+                ['host', 'key'],
+                $updates
+            );
+        }
     }
 }
