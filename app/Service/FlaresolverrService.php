@@ -45,7 +45,6 @@ class FlaresolverrService implements IProxyRequestService
 
         $response = Http::timeout(60)->post(self::getUrl(), $body);
 
-
         $response = self::convertResponse($response->json());
 
         self::saveCookies($response['cookies']);
