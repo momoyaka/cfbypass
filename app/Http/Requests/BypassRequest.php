@@ -26,7 +26,7 @@ class BypassRequest extends FormRequest
             'method' => 'required|string|in:GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS', // Restrict to HTTP methods.
             'data' => 'nullable|array', // Optional and must be an array.
             'cookies' => 'nullable|array', // Optional and must be an array.
-            'proxy' => 'nullable|string', // Optional and must be a valid URL.
+            'proxy' => 'nullable|boolean', // Optional and must be a valid URL.
         ];
     }
 }

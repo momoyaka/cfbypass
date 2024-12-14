@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Models\Cookie;
+use App\Models\Proxy;
 use Carbon\Carbon;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
@@ -12,11 +13,12 @@ class FlaresolverrService implements IProxyRequestService
     const HOST = 'flaresolverr';
     const PORT = 8191;
     const METHOD = 'v1';
+    const TIMEOUT = 20;
 
     /**
      * @throws ConnectionException
      */
-    public static function bypass(string $url, string $method, array $data = [], array $cookies = [], ?string $proxy = null): array
+    public static function bypass(string $url, string $method, array $data = [], array $cookies = [], string|Proxy|null $proxy = null): array
     {
         $host = parse_url($url, PHP_URL_HOST);
 
@@ -30,17 +32,23 @@ class FlaresolverrService implements IProxyRequestService
         $body = [
             "cmd" => "request.get",
             "url" => $url,
-            "maxTimeout" => 60000,
+            "maxTimeout" => self::TIMEOUT * 1000,
         ];
-
-        if (!empty($proxy)) {
-            $body['proxy'] = [
-                'url' => $proxy
-            ];
-        }
 
         if (!empty($cookies)) {
             $body['cookies'] = self::convertCookies($cookies);
+        }
+
+        if ($proxy instanceof Proxy) {
+            $session = self::createSession($proxy);
+            $body['session'] = $session;
+            unset($body['cookies']);
+        }
+
+        if (is_string($proxy)) {
+            $body['proxy'] = [
+                'url' => $proxy
+            ];
         }
 
         $response = Http::timeout(60)->post(self::getUrl(), $body);
@@ -50,6 +58,25 @@ class FlaresolverrService implements IProxyRequestService
         self::saveCookies($response['cookies']);
 
         return $response;
+    }
+
+    /**
+     * @throws ConnectionException
+     */
+    public static function createSession(Proxy $proxy) : string {
+        $body = [
+            'cmd' => 'sessions.create',
+            'session' => $proxy->host,
+            'proxy' => [
+                'url' => $proxy->scheme .'://'. $proxy->host . ':' . $proxy->port,
+                'username' => $proxy->getAttribute('user') ?? null,
+                'password' => $proxy->getAttribute('pass') ?? null,
+            ]
+        ];
+
+        $response = Http::timeout(self::TIMEOUT)->post(self::getUrl(), $body);
+
+        return $response['session'];
     }
 
 
@@ -106,5 +133,23 @@ class FlaresolverrService implements IProxyRequestService
                 $updates
             );
         }
+    }
+
+    /**
+     * Удалить сессию
+     *
+     * @param Proxy $proxy
+     * @return array
+     * @throws ConnectionException
+     */
+    public static function deleteSession(Proxy $proxy): array
+    {
+        $body = [
+            'cmd' => 'sessions.destroy',
+            'session' => $proxy->host,
+        ];
+
+        $response = Http::timeout(self::TIMEOUT)->post(self::getUrl(), $body);
+        return $response->json();
     }
 }
