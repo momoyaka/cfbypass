@@ -13,7 +13,7 @@ class FlaresolverrService implements IProxyRequestService
     const HOST = 'flaresolverr';
     const PORT = 8191;
     const METHOD = 'v1';
-    const TIMEOUT = 20;
+    const TIMEOUT = 30;
 
     /**
      * @throws ConnectionException

@@ -6,6 +6,17 @@
 3. В контейнере приложения выполнить `php artisan migrate`
 
 Доступен роут `http://localhost:8080/api/bypass`
+
+Если флаг proxy = false то будет попытка парсинга без использования прокси
+
+По дефолту прокси включены
+Они читаются из файлика storage/app/private/proxy_list.txt
+
+Добавлять в формате `{scheme://[user:pass]@host:port}`
+Юзер и пароль опциональные
+
+При использовании прокси куки используются серверные, из запроса игнорируются
+
 Пример body 
 ```
 {
@@ -15,7 +26,7 @@
   "cookies" : {
     "cf_clearance": "wEHdtYqBhefmvoTnvhhaqFQckFGijM0BY8Ge7OYNR0Q-1733676250-1.2.1.1-h_16_dfDi4TBoVH7Hgd65bY6SEuFSXO2dKgUIVKUsTnmF6Yrjv7WWnXqP9dNi3uXmr._I26Lq59WFakSqUnjumPQANQHhfbET.8DZaIhx_HXFTj7C92zVdBi8vHLSTpNRnEctCa4V91seEOtZ_1eeSUDEpVK_P.W3bjpnakLXc7RC1nXpvFswhB0n1GStc5os2W0UuoJExsAWXyUJ56bMQul_yROtiT8yknCsq6Ucb0AxZ4tlI9gST5Q29E0HZqHz6669XdZvt9Kv0llmFsG4E7pxXKhhfWmKJutLLlnavZBR_nt4f47BDPA0HRIS.jbGV.T0qujFShuiSFXRYjMLaF3cn.ZwlBqwjlO6sFzYuJmDowgfnBylXh97iSPFArwSWNWX_sVQEtoQsEIUaaHhJzU.nqnOdwyFu8QIcam8y4"
   },
-  "proxy": "socks5://103.82.20.108:51980"
+  "proxy": true
 }
 ```
 
