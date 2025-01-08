@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\BypassRequest;
+use App\Models\LogRequest;
 use App\Models\Proxy;
 use App\Service\FlaresolverrService;
 use Illuminate\Http\Client\ConnectionException;
@@ -17,7 +18,9 @@ class BypassController extends Controller
 
         $tries = $request->get('tries', 3);
 
-        $result = ['status'=> 'error'];
+        $proxy = null;
+
+        $result = ['status' => 'error'];
         if ($request->get('proxy', true) === false) {
             $result = FlaresolverrService::bypass(
                 $request->get('url'),
@@ -40,13 +43,36 @@ class BypassController extends Controller
                 $proxy
             );
 
+            $proxy->setAttribute('last_try', now());
+            $proxy->save();
+
             if ($result['status'] != 'error') {
                 break;
             }
-
-            $proxy->setAttribute('last_try', now());
-            $proxy->save();
         }
+
+        if (!$request->get('return_cookies', false)) {
+            unset($result['cookies']);
+        }
+
+        $log = new LogRequest();
+
+        $logResult = $result;
+        unset($logResult['response']);
+
+        $log->setAttribute('url', $request->get('url'));
+        $log->setAttribute('method', $request->get('method', 'POST'));
+        $log->setAttribute('body',
+            json_encode(
+                $request->get('data', []) +
+                $request->get('cookies', []) +
+                ['proxy' => $proxy?->toArray() ?? null]
+            )
+        );
+        $log->setAttribute('result', json_encode($logResult));
+        $log->setAttribute('status', 0);
+
+        $log->save();
 
         return $result;
     }

@@ -32,7 +32,7 @@ class FlaresolverrService implements IProxyRequestService
         $body = [
             "cmd" => "request.get",
             "url" => $url,
-            "maxTimeout" => self::TIMEOUT * 1000,
+            "maxTimeout" => config('flaresolver.timeout', 60) * 1000,
         ];
 
         if (!empty($cookies)) {
@@ -51,7 +51,7 @@ class FlaresolverrService implements IProxyRequestService
             ];
         }
 
-        $response = Http::timeout(60)->post(self::getUrl(), $body);
+        $response = Http::timeout(config('flaresolver.timeout', 60))->post(self::getUrl(), $body);
 
         $response = self::convertResponse($response->json());
 
@@ -149,7 +149,7 @@ class FlaresolverrService implements IProxyRequestService
             'session' => $proxy->host,
         ];
 
-        $response = Http::timeout(self::TIMEOUT)->post(self::getUrl(), $body);
+        $response = Http::timeout(config('flaresolver.timeout', 60))->post(self::getUrl(), $body);
         return $response->json();
     }
 }

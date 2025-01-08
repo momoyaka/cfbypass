@@ -27,6 +27,7 @@ class BypassRequest extends FormRequest
             'data' => 'nullable|array', // Optional and must be an array.
             'cookies' => 'nullable|array', // Optional and must be an array.
             'proxy' => 'nullable|boolean', // Optional and must be a valid URL.
+            'return_cookies' => 'nullable|boolean', // return cookie on result
         ];
     }
 }
