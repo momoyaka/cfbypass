@@ -44,5 +44,8 @@ class ProxyService
             );
         }
 
+        Proxy::query()->update([
+            'last_try' => now()
+        ]);
     }
 }
