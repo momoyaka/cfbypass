@@ -64,6 +64,11 @@ class FlaresolverrService implements IProxyRequestService
      * @throws ConnectionException
      */
     public static function createSession(Proxy $proxy) : string {
+
+        if ($proxy->getAttribute('request_count') % (int)config('flaresolver.request_per_session') == 0) {
+            self::deleteSession($proxy);
+        }
+
         $body = [
             'cmd' => 'sessions.create',
             'session' => $proxy->host,
@@ -93,6 +98,7 @@ class FlaresolverrService implements IProxyRequestService
                 'value' => $value
             ];
         }, array_keys($cookies), array_values($cookies));
+
     }
 
     private static function convertResponse(mixed $json): array

@@ -44,6 +44,10 @@ class BypassController extends Controller
             );
 
             $proxy->setAttribute('last_try', now());
+
+            $requestCount = (int)($proxy->getAttribute('request_count'));
+            $proxy->setAttribute('request_count', ++$requestCount);
+
             $proxy->save();
 
             if ($result['status'] != 'error') {
